@@ -13,8 +13,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -61,11 +65,29 @@ public class Conexion {
         return Con;
     }
     
-//    public ResultSet Procedure(String sp){
-//        PreparedStatement ps;
-//        ps = this.Con.prepareStatement(sp,columnNames);
-//        ResultSet rs = null;
-//        return rs;
-//    }
-//    
+    public List Procedure(String sp, HashMap<String, String> parameters) {
+        ArrayList<String> data = new ArrayList<>();
+        PreparedStatement ps;
+        ResultSet rs;
+        String sql = "EXEC " + sp + " ";
+        try {
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                sql = sql + "@" + entry.getKey() + " = " + entry.getValue() + ",";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            ps = this.Con.prepareStatement(sql);
+            rs = ps.executeQuery();
+            ResultSetMetaData md = rs.getMetaData();            
+            int totalColumn = md.getColumnCount();
+            
+            while (rs.next()) {
+                for (int i = 1; i <= totalColumn; i++) {
+                    data.add((String) rs.getObject(i).toString());
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
 }
